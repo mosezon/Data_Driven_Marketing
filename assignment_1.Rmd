@@ -1,30 +1,66 @@
 ---
-title: "Assignment_1"
-author: "G3"
+title: "Data-Driven Marketing: 1st Assignment"
+author: "Group 3:Azzollini Francesca, Caramelli Leonardo, Mosezon Davide, Stefanelli Riccardo"
 date: "2022-10-05"
-output: html_document
+output:
+  html_document:
+    
+    highlight: zenburn
+    theme: flatly
+    toc: yes
+    toc_float: yes
+    number_sections: yes
+    code_folding: show
+  pdf_document:
+    toc: yes
 ---
 
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+```{r setup, include=FALSE, echo=FALSE}
+knitr::opts_chunk$set(
+  message = FALSE, 
+  warning = FALSE, 
+  tidy=FALSE,     # display code as typed
+  size="small")   # slightly smaller font for code
+options(digits = 3)
+
+# default figure size
+knitr::opts_chunk$set(
+  fig.width=6.75, 
+  fig.height=6.75,
+  fig.align = "center"
+)
+
 ```
 
-## R Markdown
+```{r load_library, echo=FALSE}
 
-This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+library(tidyverse)
+library(skimr)
+library(lubridate)
+library(readxl)
 
-When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
-
-```{r first_analysis}
-head(datichannel2022)
 ```
 
-## Including Plots
+# Assignment_1
 
-You can also embed plots, for example:
+## Description
 
-```{r pressure, echo=FALSE}
-plot(pressure)
+The database I am sharing with you is from a major European book retailer operating in one country. The retailer uses three sales channels---physical retail stores, catalogs, and the Internet---and uses a subscription business model. Thus, to be eligible to purchase, each customer must become a member. A code is associated with each customer, tracking each time they buy and from which channel. Therefore, we have information on which channel each customer selected on each purchase occasion, the date in which he/she was acquired and when he/she terminated the subscription, how much was spent, and age and gender demographics. Each channel shares the same assortment and price.
+
+You can observe customers from January 2001 till June 2006. The dataset includes a cohort of customers acquired in 2001. Hereafter you will find a description of the variables included in the dataset.
+
+I will ask you to explore this dataset. Extract the information it contains and relate it to decision problems.
+
+I expect you to hand in a report on this analysis by Monday 10th, at 24:00.
+
+## Analysys
+
+```{r first_analysis, echo=FALSE}
+
+df_assigment_1 <- read_excel("datichannel2022.xlsx")
+
+glimpse(df_assigment_1)
+skim(df_assigment_1)
+
+
 ```
-
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
