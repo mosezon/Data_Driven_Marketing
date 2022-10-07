@@ -34,10 +34,27 @@ knitr::opts_chunk$set(
 
 ```{r load_library, echo=FALSE}
 
-library(tidyverse)
-library(skimr)
-library(lubridate)
 library(readxl)
+library(tidyverse) # the usual stuff: dplyr, readr, and other goodies
+library(lubridate) # to handle dates
+library(GGally) # for correlation-scatter plot matrix
+library(ggfortify) # to produce residual diagnostic plots
+library(rsample) # to split dataframe in training- & testing sets
+library(janitor) # clean_names()
+library(broom) # use broom:augment() to get tidy table with regression output, residuals, etc
+library(huxtable) # to get summary table of all models produced
+library(kableExtra) # for formatting tables
+library(moderndive) # for getting regression tables
+library(skimr) # for skim
+library(mosaic)
+library(leaflet) # for interactive HTML maps
+library(tidytext)
+library(viridis)
+library(vroom)
+library(kableExtra)
+library(performance)
+library(patchwork)
+
 
 ```
 
@@ -64,3 +81,74 @@ skim(df_assigment_1)
 
 
 ```
+
+
+```{r second_analysis}
+#Active people
+df_assigment_1_notActive <- df_assigment_1 %>% 
+  filter(yearEND > 1)
+
+df_assigment_1_Active <- df_assigment_1 %>% 
+  filter(yearEND < 1)
+
+```
+## Not active customer
+```{r notActiveCustomerAnalysis}
+#Active customer
+count(df_assigment_1_Active)
+
+#Lost customer
+count(df_assigment_1_notActive)
+
+#Calculate how many days 
+df_assigment_1_notActive <- df_assigment_1_notActive %>% 
+  mutate(totalDays = date_END - date_BEGIN) %>% 
+  filter(!is.na(totalDays))
+
+#Calculate the median
+df_assigment_1_notActive %>% 
+  summarise(medianDuration = median(totalDays, na.rm = TRUE))
+
+df_assigment_1_notActive %>% 
+  filter(!is.na(totalDays)) %>% 
+  ggplot(aes(totalDays)) + 
+  geom_histogram(binwidth = 10) +
+  labs(title = "Title", 
+        subtitle = "SubTitle") +
+  theme(plot.caption = element_text(hjust= 1), 
+        axis.title.x = element_blank(), 
+        axis.title.y = element_blank())
+
+#How customer were catched
+df_assigment_1_notActive %>% 
+  summarise(countStreetAgent = count(StreetAgent),
+            countDoorAgent = count(DoorAgent))
+#Convert date to integer
+df_assigment_1_notActive$totalDays <- as.numeric(as.character(df_assigment_1_notActive$totalDays))
+
+df_assigment_1_notActive %>% 
+  select(totalDays, revenues_total, Frequency_total, age, ret_year_total, qta_total) %>% 
+  ggpairs(alpha = 0.3)
+
+```
+
+## Active Customer
+```{r activeCustomer}
+
+mean_city <- df_assigment_1 %>% 
+  filter(mean_city == 1) %>% 
+  select(vpccdpro) %>% 
+  pull()
+
+
+df_assigment_1_Active %>% 
+  group_by(vpccdpro) %>% 
+  summarise(countActive = count(vpccdpro)) %>% 
+  mutate(meanCity = vpccdpro%in%mean_city) %>% 
+  mutate(vpccdpro = fct_reorder(vpccdpro, countActive)) %>%
+  ggplot(aes(x=vpccdpro,y=countActive,fill=meanCity)) +
+  geom_col()
+
+
+```
+
