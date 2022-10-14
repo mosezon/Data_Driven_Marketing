@@ -1,0 +1,103 @@
+---
+title: "Artea_Analysis"
+date: "2022-10-12"
+author: "Group 3:Azzollini Francesca, Caramelli Leonardo, Mosezon Davide, Stefanelli Riccardo"
+output:
+  html_document:
+    highlight: zenburn
+    theme: flatly
+    toc: yes
+    toc_float: yes
+    number_sections: yes
+    code_folding: show
+  pdf_document:
+    toc: yes
+---
+
+```{r setup, include=FALSE, echo=FALSE}
+knitr::opts_chunk$set(
+  message = FALSE, 
+  warning = FALSE, 
+  tidy=FALSE,     # display code as typed
+  size="small")   # slightly smaller font for code
+options(digits = 3)
+
+# default figure size
+knitr::opts_chunk$set(
+  fig.width=6.75, 
+  fig.height=6.75,
+  fig.align = "center"
+)
+
+```
+
+
+```{r load_library, echo=FALSE}
+
+library(readxl)
+library(tidyverse) # the usual stuff: dplyr, readr, and other goodies
+library(lubridate) # to handle dates
+library(GGally) # for correlation-scatter plot matrix
+library(ggfortify) # to produce residual diagnostic plots
+library(rsample) # to split dataframe in training- & testing sets
+library(janitor) # clean_names()
+library(broom) # use broom:augment() to get tidy table with regression output, residuals, etc
+library(huxtable) # to get summary table of all models produced
+library(kableExtra) # for formatting tables
+library(moderndive) # for getting regression tables
+library(skimr) # for skim
+library(mosaic)
+library(leaflet) # for interactive HTML maps
+library(tidytext)
+library(viridis)
+library(vroom)
+library(kableExtra)
+library(performance)
+library(patchwork)
+```
+
+# Artea Analysis
+
+```{r load_file, echo=TRUE}
+
+df_artea <- read_excel("Artea_main database.xlsx")
+
+skim(df_artea)
+
+```
+
+```{r channel_analysis, echo=TRUE}
+
+df_artea %>% 
+  group_by(channel_acq, test_coupon) %>% 
+  summarise(medianBrowsing = median(browsing_minutes),
+            countValue = count(channel_acq),
+            sumTrans_after = sum(trans_after)) %>% 
+  ggplot(aes(x=channel_acq, y=countValue, fill=medianBrowsing)) +
+  geom_col(stat = 'identity', position = 'dodge') + 
+  theme_bw() +
+  facet_wrap(vars(test_coupon), nrow=1)
+
+df_artea %>% 
+  group_by(channel_acq, test_coupon) %>% 
+  summarise(medianBrowsing = median(browsing_minutes),
+            countValue = count(channel_acq),
+            sumTrans_after = sum(trans_after)) %>% 
+  ggplot(aes(x=channel_acq, y=sumTrans_after, fill=medianBrowsing)) +
+  geom_col(stat = 'identity', position = 'dodge') + 
+  theme_bw() +
+  facet_wrap(vars(test_coupon), nrow=1)
+
+df_artea %>% 
+  group_by(channel_acq, test_coupon) %>% 
+  summarise(medianBrowsing = median(browsing_minutes),
+            countValue = count(channel_acq),
+            sumRevenue_after = sum(revenue_after)) %>% 
+  ggplot(aes(x=channel_acq, y=sumRevenue_after, fill=medianBrowsing)) +
+  geom_col(stat = 'identity', position = 'dodge') + 
+  theme_bw() +
+  facet_wrap(vars(test_coupon), nrow=1)
+
+```
+
+
