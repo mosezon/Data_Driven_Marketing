@@ -1,0 +1,173 @@
+---
+title: "Artea_Analysis"
+date: "2022-10-17"
+author: "Group 3:Azzollini Francesca, Caramelli Leonardo, Mosezon Davide, Stefanelli Riccardo"
+output:
+  html_document:
+    highlight: zenburn
+    theme: flatly
+    toc: yes
+    toc_float: yes
+    number_sections: yes
+    code_folding: show
+  pdf_document:
+    toc: yes
+---
+
+```{r setup, include=FALSE, echo=FALSE}
+knitr::opts_chunk$set(
+  message = FALSE, 
+  warning = FALSE, 
+  tidy=FALSE,     # display code as typed
+  size="small")   # slightly smaller font for code
+options(digits = 3)
+
+# default figure size
+knitr::opts_chunk$set(
+  fig.width=6.75, 
+  fig.height=6.75,
+  fig.align = "center"
+)
+
+```
+
+
+```{r load_library, echo=FALSE}
+
+library(readxl)
+library(tidyverse) # the usual stuff: dplyr, readr, and other goodies
+library(lubridate) # to handle dates
+library(GGally) # for correlation-scatter plot matrix
+library(ggfortify) # to produce residual diagnostic plots
+library(rsample) # to split dataframe in training- & testing sets
+library(janitor) # clean_names()
+library(broom) # use broom:augment() to get tidy table with regression output, residuals, etc
+library(huxtable) # to get summary table of all models produced
+library(kableExtra) # for formatting tables
+library(moderndive) # for getting regression tables
+library(skimr) # for skim
+library(mosaic)
+library(leaflet) # for interactive HTML maps
+library(tidytext)
+library(viridis)
+library(vroom)
+library(kableExtra)
+library(performance)
+library(patchwork)
+```
+
+# Artea Analysis
+
+```{r load_file, echo=TRUE}
+
+df_artea <- read_excel("data/Artea_main database.xlsx")
+
+skim(df_artea)
+
+```
+
+```{r channel_analysis, echo=TRUE}
+
+df_artea %>% 
+  group_by(channel_acq, test_coupon) %>% 
+  summarise(medianBrowsing = median(browsing_minutes),
+            countValue = count(channel_acq),
+            sumTrans_after = sum(trans_after)) %>% 
+  ggplot(aes(x=channel_acq, y=countValue, fill=medianBrowsing)) +
+  geom_col(stat = 'identity', position = 'dodge') + 
+  theme_bw() +
+  facet_wrap(vars(test_coupon), nrow=1)+
+  labs(title = "Test coupon by channel acquisition")
+
+df_artea %>% 
+  group_by(channel_acq, test_coupon) %>% 
+  summarise(medianBrowsing = median(browsing_minutes),
+            countValue = count(channel_acq),
+            sumTrans_after = sum(trans_after)) %>% 
+  ggplot(aes(x=channel_acq, y=sumTrans_after, fill=medianBrowsing)) +
+  geom_col(stat = 'identity', position = 'dodge') + 
+  theme_bw() +
+  facet_wrap(vars(test_coupon), nrow=1)
+
+df_artea <- df_artea %>% 
+  mutate(gross_rev_no20ptc = (revenue_after* 1.2 * test_coupon))  
+
+df_artea %>% 
+  group_by(channel_acq, test_coupon) %>% 
+  summarise(medianBrowsing = median(browsing_minutes),
+            countValue = count(channel_acq),
+            sumRevenue_after = sum(revenue_after)) %>% 
+  ggplot(aes(x=channel_acq, y=sumRevenue_after, fill=medianBrowsing)) +
+  geom_col(stat = 'identity', position = 'dodge') + 
+  theme_bw() +
+  facet_wrap(vars(test_coupon), nrow=1)
+
+```
+
+# Regression
+
+```{r regres, echo=TRUE}
+
+df_artea$channel_acq <- as.character(df_artea$channel_acq)
+
+df_artea$channel_acq <- gsub("1", "Google", df_artea$channel_acq)
+df_artea$channel_acq <- gsub("2", "Facebook", df_artea$channel_acq)
+df_artea$channel_acq <- gsub("3", "Instagram", df_artea$channel_acq)
+df_artea$channel_acq <- gsub("4", "Referral", df_artea$channel_acq)
+df_artea$channel_acq <- gsub("5", "Other", df_artea$channel_acq)
+  
+
+
+
+#regressione logistica  --- per randomizzazione
+model2 <-glm(test_coupon ~ channel_acq + num_past_purch + spent_last_purchase + weeks_since_visit + browsing_minutes + shopping_cart, data=df_artea)
+mosaic::msummary(model2)  
+
+# model2 %>% broom::tidy(conf.int = TRUE) # per avere un riepilogo.
+# model2 %>% broom::glance()
+
+```
+# Correlation
+
+```{r correl, echo=TRUE}
+
+df_artea  %>%
+  filter(test_coupon == 1) %>% 
+  select(-c(id, test_coupon, channel_acq)) %>%  
+  ggpairs(alpha = 0.3)
+
+```
+# Correlation
+
+```{r lcor2, echo=TRUE}
+
+#model4
+model4 <-lm(trans_after ~ channel_acq, data=df_artea)
+mosaic::msummary(model4)
+
+#model5
+model5 <-lm(trans_after ~  shopping_cart , data=df_artea)
+mosaic::msummary(model5)
+
+```
+# 1 esperimento funziona?
+
+```{r df, echo=TRUE}
+
+df_artea_new  <- df_artea %>% 
+  select(trans_after, revenue_after, test_coupon, channel_acq, num_past_purch, spent_last_purchase, weeks_since_visit,shopping_cart) %>% 
+  mutate(shopping_coupon = paste(shopping_cart,test_coupon,  sep = "" ))
+
+modelNew <-glm(trans_after ~shopping_coupon, data=df_artea_new)
+mosaic::msummary(modelNew)
+
+
+modelNewL <-lm(trans_after ~ shopping_cart, shopping_coupon, data=df_artea_new)
+mosaic::msummary(modelNewL)
+
+```
+
+
+
+
+
